@@ -10,17 +10,10 @@ public class ClientHandler implements Runnable
     BlockingQueue<String> messages;
     PrintWriter pw;
     Scanner sc;
-    Dispatcher dispatcher;
     Quiz quiz;
 
     public PrintWriter getPw() {
         return pw;
-    }
-
-    public ClientHandler(Socket client) throws IOException  {
-        this.client = client;
-        this.pw = new PrintWriter(client.getOutputStream(),true);
-        this.sc = new Scanner(client.getInputStream());
     }
 
     //TODO lav ny konstruktør med den delte resource
@@ -29,24 +22,28 @@ public class ClientHandler implements Runnable
         this.messages = messages;
         this.pw = new PrintWriter(client.getOutputStream(),true);
         this.sc = new Scanner(client.getInputStream());
+        quiz = new Quiz(pw, sc);
     }
 
     public void protocol() throws IOException, InterruptedException {
         String msg  = "";
+
         pw.println(" Hej fra server");
 
         while(!msg.equals("CLOSE"))
         {
             msg = sc.nextLine();
             String[] stringArray = msg.split("#");
-            String action = stringArray[0];
-            String returnMessage = stringArray[1];
+            String action = "";
+            String returnMessage = "";
+            action = stringArray[0];
+            returnMessage = stringArray[1];
 
             switch(action.toLowerCase())
             {
                 case "quiz":
                     quiz.doQuiz();
-
+                    break;
                 case "all":
                     //TODO indsæt besked i delt resource
                     messages.put(returnMessage);
@@ -60,8 +57,10 @@ public class ClientHandler implements Runnable
                 case "reverse":
                     StringBuilder sb = new StringBuilder(returnMessage);
                     pw.println(sb.reverse());
+                    break;
                 case "translate":
                     pw.println(doTranslate(returnMessage));
+                    break;
             }
         }
         client.close();
